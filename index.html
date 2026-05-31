@@ -1,65 +1,404 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Execution Flow</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-      font-family: Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FTWM Execution Flow — Vin the Trader</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #f8fafc;
-      color: #0f172a;
-    }
+:root {
+  --bg: #08080E;
+  --purple-bg:   #1E1535; --purple-bd:   #9B7FFF; --purple-tag:  #C4ADFF; --purple-body: #D4C6FF; --purple-chip-bg: #2D1F55; --purple-chip-tx: #C4ADFF; --purple-num: #7B5CFA;
+  --blue-bg:     #0D1E35; --blue-bd:     #4AABFF; --blue-tag:    #90CEFF; --blue-body:   #BFE3FF; --blue-chip-bg:   #102540; --blue-chip-tx:   #90CEFF; --blue-num:   #3B9EFF;
+  --amber-bg:    #1E1500; --amber-bd:    #F5B731; --amber-tag:   #FFD566; --amber-body:  #FFE8A0; --amber-chip-bg:  #2C1E00; --amber-chip-tx:  #FFD566; --amber-num:  #F5A623;
+  --pink-bg:     #200D18; --pink-bd:     #F0517A; --pink-tag:    #FF8DAE; --pink-body:   #FFBED0; --pink-chip-bg:   #30101E; --pink-chip-tx:   #FF8DAE; --pink-num:   #F0517A;
+  --green:       #2ECC8A; --green-bg:    #081E14; --green-bd:    #2ECC8A; --green-light: #7EEDC0;
+  --coral:       #FF6B4A; --coral-bd:    #FF6B4A; --coral-light: #FFA58C; --coral-bg:    #1E0D08;
+  --skip-bg: #141420; --skip-bd: rgba(255,255,255,0.18); --skip-tx: #C8C8D8; --skip-sub: #888899;
+  --conn-line: rgba(255,255,255,0.25); --conn-arrow: rgba(255,255,255,0.3);
+  --muted: #9999AA;
+}
 
-    main {
-      width: min(720px, 92vw);
-      padding: 2rem;
-      border-radius: 12px;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-    }
+body {
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  color: #F0EFF8;
+  min-height: 100vh;
+  padding: 48px 24px 64px;
+  background-image:
+    radial-gradient(ellipse 55% 35% at 15% 5%, rgba(123,92,250,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 30% at 85% 90%, rgba(59,158,255,0.12) 0%, transparent 65%);
+}
 
-    h1 {
-      margin-top: 0;
-      color: #1e3a8a;
-    }
+.page { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0; }
 
-    p {
-      line-height: 1.5;
-    }
+/* HEADER */
+.header { width: 100%; text-align: center; margin-bottom: 44px; }
+.header-kicker {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(155,127,255,0.18); border: 1px solid rgba(155,127,255,0.55);
+  border-radius: 40px; padding: 5px 16px; margin-bottom: 16px;
+  font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .12em;
+  color: #C4ADFF; text-transform: uppercase;
+}
+.header-kicker::before { content: '●'; font-size: 8px; color: var(--green); }
+.header-title {
+  font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800;
+  line-height: 1.05; letter-spacing: -.02em;
+  background: linear-gradient(130deg, #FFFFFF 0%, #C4ADFF 45%, #80C3FF 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: 10px;
+}
+.header-sub { font-size: 14px; color: #AAAABC; font-weight: 400; }
 
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #0f172a;
-        color: #e2e8f0;
-      }
+/* GATE LAYOUT */
+.gate-wrap { width: 100%; display: flex; align-items: flex-start; gap: 0; }
+.gate-skip { width: 140px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding-top: 30px; gap: 4px; }
+.skip-label { font-family: 'Space Mono', monospace; font-size: 9px; color: #888899; letter-spacing: .08em; text-transform: uppercase; text-align: center; margin-bottom: 6px; }
+.skip-pill {
+  width: 100%; border-radius: 10px; padding: 10px 12px; text-align: center;
+  background: var(--skip-bg); border: 1px solid var(--skip-bd);
+}
+.skip-pill-title { font-size: 12px; font-weight: 500; color: var(--skip-tx); }
+.skip-pill-sub { font-size: 10px; color: var(--skip-sub); margin-top: 2px; }
 
-      main {
-        background: #0b1220;
-        border: 1px solid #334155;
-        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35);
-      }
+.skip-connector { display: flex; align-items: center; padding-top: 50px; width: 22px; flex-shrink: 0; }
+.skip-h { width: 100%; height: 1.5px; background: rgba(255,255,255,0.2); }
 
-      h1 {
-        color: #93c5fd;
-      }
-    }
-  </style>
+.gate-main { flex: 1; }
+
+/* GATE CARDS */
+.gate-card {
+  width: 100%; border-radius: 16px; padding: 20px 22px;
+  position: relative; cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+  border-width: 1.5px; border-style: solid;
+}
+.gate-card:hover { transform: translateY(-2px); }
+
+.g1 { background: var(--purple-bg); border-color: var(--purple-bd); }
+.g1:hover { box-shadow: 0 6px 28px rgba(155,127,255,0.3); }
+.g1 .gate-num { background: var(--purple-num); }
+.g1 .gate-tag { color: var(--purple-tag); }
+.g1 .gate-title { color: #FFFFFF; }
+.g1 .gate-body { color: var(--purple-body); }
+.g1 .chip { background: var(--purple-chip-bg); color: var(--purple-chip-tx); border: 1px solid var(--purple-bd); }
+
+.g2 { background: var(--blue-bg); border-color: var(--blue-bd); }
+.g2:hover { box-shadow: 0 6px 28px rgba(74,171,255,0.25); }
+.g2 .gate-num { background: var(--blue-num); }
+.g2 .gate-tag { color: var(--blue-tag); }
+.g2 .gate-title { color: #FFFFFF; }
+.g2 .gate-body { color: var(--blue-body); }
+.g2 .chip { background: var(--blue-chip-bg); color: var(--blue-chip-tx); border: 1px solid var(--blue-bd); }
+
+.g3 { background: var(--amber-bg); border-color: var(--amber-bd); }
+.g3:hover { box-shadow: 0 6px 28px rgba(245,183,49,0.25); }
+.g3 .gate-num { background: var(--amber-num); }
+.g3 .gate-tag { color: var(--amber-tag); }
+.g3 .gate-title { color: #FFFFFF; }
+.g3 .gate-body { color: var(--amber-body); }
+.g3 .chip { background: var(--amber-chip-bg); color: var(--amber-chip-tx); border: 1px solid var(--amber-bd); }
+
+.g4 { background: var(--pink-bg); border-color: var(--pink-bd); }
+.g4:hover { box-shadow: 0 6px 28px rgba(240,81,122,0.3); }
+.g4 .gate-num { background: var(--pink-num); }
+.g4 .gate-tag { color: var(--pink-tag); }
+.g4 .gate-title { color: #FFFFFF; }
+.g4 .gate-body { color: var(--pink-body); }
+.g4 .chip { background: var(--pink-chip-bg); color: var(--pink-chip-tx); border: 1px solid var(--pink-bd); }
+
+.gate-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+  color: #fff; position: absolute; top: 18px; right: 18px;
+}
+.gate-tag { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+.gate-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; line-height: 1.25; margin-bottom: 7px; padding-right: 36px; }
+.gate-body { font-size: 12.5px; line-height: 1.6; font-weight: 400; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chip { font-family: 'Space Mono', monospace; font-size: 10px; padding: 4px 11px; border-radius: 20px; font-weight: 700; }
+
+/* CONNECTOR */
+.conn { width: 100%; display: flex; flex-direction: column; align-items: center; padding: 2px 0; }
+.conn-line { width: 2px; background: var(--conn-line); min-height: 16px; }
+.conn-badge {
+  font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: .08em;
+  text-transform: uppercase; padding: 5px 16px; border-radius: 20px; margin: 5px 0; font-weight: 700;
+}
+.cb-pass { background: rgba(46,204,138,0.2); color: #7EEDC0; border: 1.5px solid rgba(46,204,138,0.55); }
+.cb-all  { background: rgba(46,204,138,0.28); color: #2ECC8A; border: 1.5px solid #2ECC8A; }
+.conn-arrow { width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 9px solid var(--conn-arrow); }
+
+/* BANNER */
+.banner {
+  width: 100%; border-radius: 18px; padding: 22px 24px;
+  background: #081E14; border: 2px solid var(--green);
+  display: flex; align-items: center; gap: 18px; position: relative; overflow: hidden;
+}
+.banner-icon {
+  width: 52px; height: 52px; border-radius: 50%; background: var(--green);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 26px; color: #08080E; font-weight: 700;
+}
+.banner-tag { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--green); margin-bottom: 5px; font-weight: 700; }
+.banner-title { font-family: 'Syne', sans-serif; font-size: 21px; font-weight: 800; color: #FFFFFF; margin-bottom: 5px; }
+.banner-sub { font-size: 12.5px; color: #7EEDC0; font-weight: 400; }
+
+/* ACTION ROW */
+.action-row { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.action-card { border-radius: 14px; padding: 18px; cursor: pointer; transition: transform .18s ease; border-width: 1.5px; border-style: solid; }
+.action-card:hover { transform: translateY(-2px); }
+.ac-green { background: var(--green-bg); border-color: var(--green-bd); }
+.ac-green .ac-tag { color: var(--green-light); }
+.ac-green .ac-title { color: #FFFFFF; }
+.ac-green .ac-body { color: #7EEDC0; }
+.ac-blue { background: var(--blue-bg); border-color: var(--blue-bd); }
+.ac-blue .ac-tag { color: var(--blue-tag); }
+.ac-blue .ac-title { color: #FFFFFF; }
+.ac-blue .ac-body { color: var(--blue-body); }
+.ac-tag { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; }
+.ac-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+.ac-body { font-size: 11.5px; line-height: 1.55; font-weight: 400; }
+
+/* EXIT */
+.exit-card {
+  width: 100%; border-radius: 16px; padding: 20px 22px;
+  background: var(--coral-bg); border: 1.5px solid var(--coral-bd);
+  cursor: pointer; transition: transform .18s ease;
+}
+.exit-card:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(255,107,74,0.25); }
+.exit-tag { font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--coral-light); margin-bottom: 6px; font-weight: 700; }
+.exit-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: #FFFFFF; margin-bottom: 7px; }
+.exit-body { font-size: 12.5px; color: #FFA58C; font-weight: 400; line-height: 1.6; }
+.exit-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.exit-chip { font-family: 'Space Mono', monospace; font-size: 10px; padding: 4px 11px; border-radius: 20px; background: rgba(255,107,74,0.25); color: #FFA58C; border: 1px solid var(--coral-bd); font-weight: 700; }
+
+/* RESET */
+.reset {
+  width: 100%; border-radius: 10px; padding: 13px;
+  background: #141420; border: 1px solid rgba(255,255,255,0.18);
+  text-align: center; font-family: 'Space Mono', monospace; font-size: 10px;
+  color: #AAAABC; letter-spacing: .07em; font-weight: 700;
+}
+
+/* LEGEND */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
+.leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #AAAABC; }
+.leg-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+.header  { animation: fadeUp .45s ease both 0s; }
+.gate-wrap:nth-of-type(1) { animation: fadeUp .45s ease both .06s; }
+.gate-wrap:nth-of-type(2) { animation: fadeUp .45s ease both .12s; }
+.gate-wrap:nth-of-type(3) { animation: fadeUp .45s ease both .18s; }
+.gate-wrap:nth-of-type(4) { animation: fadeUp .45s ease both .24s; }
+.banner  { animation: fadeUp .45s ease both .32s; }
+.action-row { animation: fadeUp .45s ease both .38s; }
+.exit-card  { animation: fadeUp .45s ease both .44s; }
+</style>
 </head>
 <body>
-  <main>
-    <h1>Execution Flow</h1>
-    <p>Your GitHub Pages site is live.</p>
-    <p>Edit <code>index.html</code> in this repository to customize this page.</p>
-  </main>
+<div class="page">
+
+  <div class="header">
+    <div class="header-kicker">Vin the Trader — Execution Playbook</div>
+    <div class="header-title">FTWM + Volumetric<br>+ Johnny Scalper</div>
+    <div class="header-sub">Pass all 4 gates before pulling the trigger. Every gate matters.</div>
+  </div>
+
+  <!-- GATE 1 -->
+  <div class="gate-wrap">
+    <div class="gate-skip">
+      <div class="skip-label">No signal</div>
+      <div class="skip-pill">
+        <div class="skip-pill-title">Stand aside</div>
+        <div class="skip-pill-sub">Wait. No trade.</div>
+      </div>
+    </div>
+    <div class="skip-connector"><div class="skip-h"></div></div>
+    <div class="gate-main">
+      <div class="gate-card g1">
+        <div class="gate-num">1</div>
+        <div class="gate-tag">Gate 1 — Signal trigger</div>
+        <div class="gate-title">FTWM signal fired?</div>
+        <div class="gate-body">No signal, no trade — full stop. This is your only entry into the market. Do not anticipate it.</div>
+        <div class="chips">
+          <span class="chip">FTWM alert</span>
+          <span class="chip">Direction locked</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn">
+    <div class="conn-line"></div>
+    <div class="conn-badge cb-pass">✓ Signal confirmed</div>
+    <div class="conn-line"></div>
+    <div class="conn-arrow"></div>
+  </div>
+
+  <!-- GATE 2 -->
+  <div class="gate-wrap">
+    <div class="gate-skip">
+      <div class="skip-label">Weak / below 20</div>
+      <div class="skip-pill">
+        <div class="skip-pill-title">Half size or skip</div>
+        <div class="skip-pill-sub">Low prob setup</div>
+      </div>
+    </div>
+    <div class="skip-connector"><div class="skip-h"></div></div>
+    <div class="gate-main">
+      <div class="gate-card g2">
+        <div class="gate-num">2</div>
+        <div class="gate-tag">Gate 2 — Volume confirmation</div>
+        <div class="gate-title">OBV + CVD both &gt;20 and rising?</div>
+        <div class="gate-body">Bearish or weak volume kills the setup. You need both instruments confirming in the same direction and increasing.</div>
+        <div class="chips">
+          <span class="chip">OBV &gt; 20</span>
+          <span class="chip">CVD &gt; 20</span>
+          <span class="chip">Both rising</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn">
+    <div class="conn-line"></div>
+    <div class="conn-badge cb-pass">✓ Volume strong</div>
+    <div class="conn-line"></div>
+    <div class="conn-arrow"></div>
+  </div>
+
+  <!-- GATE 3 -->
+  <div class="gate-wrap">
+    <div class="gate-skip">
+      <div class="skip-label">Price Core dropping</div>
+      <div class="skip-pill">
+        <div class="skip-pill-title">Partial size only</div>
+        <div class="skip-pill-sub">Watch closely</div>
+      </div>
+    </div>
+    <div class="skip-connector"><div class="skip-h"></div></div>
+    <div class="gate-main">
+      <div class="gate-card g3">
+        <div class="gate-num">3</div>
+        <div class="gate-tag">Gate 3 — Context filters</div>
+        <div class="gate-title">Signed Press, Price Core, Regime Core all &gt;20?</div>
+        <div class="gate-body">Signed Press rising = momentum building. Price Core dropping = warning flag. Regime Core must hold above 20.</div>
+        <div class="chips">
+          <span class="chip">Signed Press ↑</span>
+          <span class="chip">Price Core stable</span>
+          <span class="chip">Regime Core &gt; 20</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn">
+    <div class="conn-line"></div>
+    <div class="conn-badge cb-pass">✓ Context aligned</div>
+    <div class="conn-line"></div>
+    <div class="conn-arrow"></div>
+  </div>
+
+  <!-- GATE 4 -->
+  <div class="gate-wrap">
+    <div class="gate-skip">
+      <div class="skip-label">Opposite / no fire</div>
+      <div class="skip-pill">
+        <div class="skip-pill-title">Skip trade</div>
+        <div class="skip-pill-sub">No confluence</div>
+      </div>
+    </div>
+    <div class="skip-connector"><div class="skip-h"></div></div>
+    <div class="gate-main">
+      <div class="gate-card g4">
+        <div class="gate-num">4</div>
+        <div class="gate-tag">Gate 4 — Momentum alignment</div>
+        <div class="gate-title">Johnny fires in the same direction?</div>
+        <div class="gate-body">Johnny opposing FTWM = conflicted setup, skip it. Johnny aligned = full confluence achieved.</div>
+        <div class="chips">
+          <span class="chip">Same direction</span>
+          <span class="chip">Full confluence</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conn">
+    <div class="conn-line"></div>
+    <div class="conn-badge cb-all">✓ All 4 gates passed</div>
+    <div class="conn-line"></div>
+    <div class="conn-arrow"></div>
+  </div>
+
+  <!-- BANNER -->
+  <div class="banner">
+    <div class="banner-icon">✓</div>
+    <div>
+      <div class="banner-tag">High probability setup</div>
+      <div class="banner-title">Execute with full size</div>
+      <div class="banner-sub">Market order on signal candle close. Direction = FTWM + Johnny. Stop below candle wick.</div>
+    </div>
+  </div>
+
+  <div class="conn">
+    <div class="conn-line" style="min-height:22px"></div>
+    <div class="conn-arrow"></div>
+  </div>
+
+  <!-- ENTRY + MONITOR -->
+  <div class="action-row">
+    <div class="action-card ac-green">
+      <div class="ac-tag">Entry execution</div>
+      <div class="ac-title">Enter on signal candle close</div>
+      <div class="ac-body">Market order if all 4 gates clear. Tight limit if mixed. Hard stop below the signal candle wick.</div>
+    </div>
+    <div class="action-card ac-blue">
+      <div class="ac-tag">In trade — monitor live</div>
+      <div class="ac-title">OBV, CVD, Signed Press still rising?</div>
+      <div class="ac-body">Hold and trail if strong. Cut size or exit early the moment volume indicators start to flatten.</div>
+    </div>
+  </div>
+
+  <div class="conn">
+    <div class="conn-line" style="min-height:22px"></div>
+    <div class="conn-arrow"></div>
+  </div>
+
+  <!-- EXIT -->
+  <div class="exit-card">
+    <div class="exit-tag">Exit rules</div>
+    <div class="exit-title">OBV / CVD flip or Signed Press reversal</div>
+    <div class="exit-body">Don't wait for price to reverse. Exit when volumetric confirmation dies. Target ~100 pts. Record every trade.</div>
+    <div class="exit-chips">
+      <span class="exit-chip">OBV flips</span>
+      <span class="exit-chip">CVD reverses</span>
+      <span class="exit-chip">Signed Press drops</span>
+      <span class="exit-chip">~100 pt target hit</span>
+    </div>
+  </div>
+
+  <div class="conn">
+    <div class="conn-line" style="min-height:22px"></div>
+    <div class="conn-arrow"></div>
+  </div>
+
+  <div class="reset">↻ &nbsp; RECORD · RESET · SCAN FOR NEXT FTWM SIGNAL</div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:#9B7FFF"></div>Gate 1 — Signal</div>
+    <div class="leg"><div class="leg-dot" style="background:#4AABFF"></div>Gate 2 — Volume</div>
+    <div class="leg"><div class="leg-dot" style="background:#F5B731"></div>Gate 3 — Context</div>
+    <div class="leg"><div class="leg-dot" style="background:#F0517A"></div>Gate 4 — Momentum</div>
+    <div class="leg"><div class="leg-dot" style="background:#2ECC8A"></div>Entry / hold</div>
+    <div class="leg"><div class="leg-dot" style="background:#FF6B4A"></div>Exit</div>
+  </div>
+
+</div>
 </body>
 </html>
